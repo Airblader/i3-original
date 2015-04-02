@@ -233,7 +233,7 @@ state FOCUS_ON_WINDOW_ACTIVATION:
   mode = word
       -> call cfg_focus_on_window_activation($mode)
 
-# workspace <workspace> output <output>
+# workspace <workspace> output <output> [<output> …]
 state WORKSPACE:
   workspace = word
     -> WORKSPACE_OUTPUT
@@ -244,7 +244,15 @@ state WORKSPACE_OUTPUT:
 
 state WORKSPACE_OUTPUT_STR:
   output = word
-      -> call cfg_workspace($workspace, $output)
+      -> call cfg_workspace($workspace, $output); WORKSPACE_OUTPUT_APPEND_STR
+  end
+      -> INITIAL
+
+state WORKSPACE_OUTPUT_APPEND_STR:
+  output = word
+      -> call cfg_workspace(NULL, $output); WORKSPACE_OUTPUT_APPEND_STR
+  end
+      -> INITIAL
 
 # ipc-socket <path>
 state IPC_SOCKET:

@@ -1937,6 +1937,9 @@ void cmd_rename_workspace(I3_CMD, char *old_name, char *new_name) {
         if (strcmp(assignment->name, workspace->name) != 0 && (!name_is_digits(assignment->name) || ws_name_to_number(assignment->name) != workspace->num)) {
             continue;
         }
+        /* If the output isn't present, we need to try other bindings that might exist. */
+        if (get_output_by_name(assignment->output) == NULL)
+            continue;
 
         workspace_move_to_output(workspace, assignment->output);
 

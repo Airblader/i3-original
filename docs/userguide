@@ -756,22 +756,25 @@ or when starting (e.g., by default it will use 1 for the first screen, 2 for
 the second screen and so on).
 
 *Syntax*:
-----------------------------------
-workspace <workspace> output <output>
-----------------------------------
+--------------------------------------------------
+workspace <workspace> output <output> [<output> …]
+--------------------------------------------------
 
 The 'output' is the name of the RandR output you attach your screen to. On a
 laptop, you might have VGA1 and LVDS1 as output names. You can see the
 available outputs by running +xrandr --current+.
 
+You can specify a list of outputs for every assignment. Starting with the first
+output in the list, the first output that is connected and active will be used.
+
 If you use named workspaces, they must be quoted:
 
 *Examples*:
----------------------------
+-----------------------------------------
 workspace 1 output LVDS1
-workspace 5 output VGA1
 workspace "2: vim" output VGA1
----------------------------
+workspace 1 output "DP-0" "LVDS-1" "VGA1"
+-----------------------------------------
 
 === Changing colors
 

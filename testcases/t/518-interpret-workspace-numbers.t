@@ -25,9 +25,9 @@ my $config = <<EOT;
 font -misc-fixed-medium-r-normal--13-120-75-75-C-70-iso10646-1
 
 workspace 1:override output fake-0
+workspace 2:override output fake-1
 workspace 2 output fake-0
 workspace 1 output fake-1
-workspace 2:override output fake-1
 
 fake-outputs 1024x768+0+0,1024x768+1024+0
 EOT

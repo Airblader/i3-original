@@ -375,27 +375,17 @@ CFGFUN(show_marks, const char *value) {
     config.show_marks = eval_boolstr(value);
 }
 
-CFGFUN(workspace, const char *workspace, const char *output) {
+CFGFUN(workspace, const char *_workspace, const char *output) {
+    const char *workspace = _workspace != NULL ? _workspace
+        : TAILQ_LAST(&ws_assignments, ws_assignments_head)->name;
+
     DLOG("Assigning workspace \"%s\" to output \"%s\"\n", workspace, output);
-    /* Check for earlier assignments of the same workspace so that we
-     * don’t have assignments of a single workspace to different
-     * outputs */
+
     struct Workspace_Assignment *assignment;
-    bool duplicate = false;
-    TAILQ_FOREACH(assignment, &ws_assignments, ws_assignments) {
-        if (strcasecmp(assignment->name, workspace) == 0) {
-            ELOG("You have a duplicate workspace assignment for workspace \"%s\"\n",
-                 workspace);
-            assignment->output = sstrdup(output);
-            duplicate = true;
-        }
-    }
-    if (!duplicate) {
-        assignment = scalloc(sizeof(struct Workspace_Assignment));
-        assignment->name = sstrdup(workspace);
-        assignment->output = sstrdup(output);
-        TAILQ_INSERT_TAIL(&ws_assignments, assignment, ws_assignments);
-    }
+    assignment = scalloc(sizeof(struct Workspace_Assignment));
+    assignment->name = sstrdup(workspace);
+    assignment->output = sstrdup(output);
+    TAILQ_INSERT_TAIL(&ws_assignments, assignment, ws_assignments);
 }
 
 CFGFUN(ipc_socket, const char *path) {

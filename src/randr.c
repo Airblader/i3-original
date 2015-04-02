@@ -356,20 +356,41 @@ void init_ws_for_output(Output *output, Con *content) {
     /* go through all assignments and move the existing workspaces to this output */
     struct Workspace_Assignment *assignment;
     TAILQ_FOREACH(assignment, &ws_assignments, ws_assignments) {
-        if (strcmp(assignment->output, output->name) != 0)
+        if (get_output_by_name(assignment->output) == NULL
+            || strcmp(assignment->output, output->name) != 0) {
+
             continue;
+        }
 
         /* check if this workspace actually exists */
         Con *workspace = NULL, *out;
-        TAILQ_FOREACH(out, &(croot->nodes_head), nodes)
-        GREP_FIRST(workspace, output_get_content(out),
-                   !strcasecmp(child->name, assignment->name));
+        TAILQ_FOREACH(out, &(croot->nodes_head), nodes) {
+            GREP_FIRST(workspace, output_get_content(out),
+                       !strcasecmp(child->name, assignment->name));
+        }
         if (workspace == NULL)
             continue;
 
+        Con *workspace_out = con_get_output(workspace);
+        /* If the  */
+        struct Workspace_Assignment *current;
+        bool stop = false;
+        TAILQ_FOREACH(current, &ws_assignments, ws_assignments) {
+            if (strcmp(current->name, workspace->name) != 0 || current->output == NULL)
+                continue;
+
+            if (strcmp(current->output, workspace_out->name) == 0) {
+                stop = true;
+                break;
+            }
+
+            if (strcmp(current->output, output->name) == 0)
+                break;
+        }
+        if (stop) continue;
+
         /* check that this workspace is not already attached (that means the
          * user configured this assignment twice) */
-        Con *workspace_out = con_get_output(workspace);
         if (workspace_out == output->con) {
             LOG("Workspace \"%s\" assigned to output \"%s\", but it is already "
                 "there. Do you have two assignment directives for the same "
@@ -437,7 +458,19 @@ void init_ws_for_output(Output *output, Con *content) {
 
     /* otherwise, we create the first assigned ws for this output */
     TAILQ_FOREACH(assignment, &ws_assignments, ws_assignments) {
-        if (strcmp(assignment->output, output->name) != 0)
+        if (get_output_by_name(assignment->output) == NULL
+            || strcmp(assignment->output, output->name) != 0) {
+
+            continue;
+        }
+
+        /* Check that the workspace does not yet exist. */
+        Con *workspace = NULL, *out;
+        TAILQ_FOREACH(out, &(croot->nodes_head), nodes) {
+            GREP_FIRST(workspace, output_get_content(out),
+                       !strcasecmp(child->name, assignment->name));
+        }
+        if (workspace != NULL)
             continue;
 
         LOG("Initializing first assigned workspace \"%s\" for output \"%s\"\n",

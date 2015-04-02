@@ -60,14 +60,19 @@ Con *workspace_get(const char *num, bool *created) {
          * -1. */
         long parsed_num = ws_name_to_number(num);
 
+        Con *assigned_output = NULL;
         TAILQ_FOREACH(assignment, &ws_assignments, ws_assignments) {
             if (strcmp(assignment->name, num) == 0) {
                 DLOG("Found workspace name assignment to output \"%s\"\n", assignment->output);
-                GREP_FIRST(output, croot, !strcmp(child->name, assignment->output));
-                break;
+                GREP_FIRST(assigned_output, croot, !strcmp(child->name, assignment->output));
             } else if (parsed_num != -1 && name_is_digits(assignment->name) && ws_name_to_number(assignment->name) == parsed_num) {
                 DLOG("Found workspace number assignment to output \"%s\"\n", assignment->output);
-                GREP_FIRST(output, croot, !strcmp(child->name, assignment->output));
+                GREP_FIRST(assigned_output, croot, !strcmp(child->name, assignment->output));
+            }
+
+            if (assigned_output != NULL) {
+                output = assigned_output;
+                break;
             }
         }
 
