@@ -16,7 +16,7 @@
 #
 # Tests the 'move [window|container] [to] position mouse|cursor|pointer command.
 # Ticket: #1696
-use i3test;
+use i3test i3_autostart => 0;
 use POSIX qw(floor);
 
 sub warp_pointer {
@@ -25,7 +25,7 @@ sub warp_pointer {
     sync_with_i3;
 }
 
-my ($ws, $rect, @cons);
+my ($pid, $config, $ws, $rect, @cons);
 my $root_rect = $x->root->rect;
 
 ##########################################################################
@@ -35,6 +35,11 @@ my $root_rect = $x->root->rect;
 # moving the container to the mouse, then the container is moved such
 # that the cursor is centered inside it.
 ##########################################################################
+
+$config = <<EOT;
+font pango:monospace 8
+EOT
+$pid = launch_with_config($config);
 
 $ws = fresh_workspace;
 open_floating_window;
@@ -48,11 +53,18 @@ $rect = $cons[0]->{rect};
 is(floor($rect->{x} + $rect->{width} / 2), 100, "con is centered around cursor horizontally");
 is(floor($rect->{y} + $rect->{height} / 2), 100, "con is centered around cursor vertically");
 
+exit_gracefully($pid);
+
 ##########################################################################
 # Given a floating container and the cursor is in the left upper edge
 # of the output, when moving the container to the mouse, then the 
 # container is moved but adjusted to stay in-bounds.
 ##########################################################################
+
+$config = <<EOT;
+font pango:monospace 8
+EOT
+$pid = launch_with_config($config);
 
 $ws = fresh_workspace;
 open_floating_window;
@@ -66,11 +78,18 @@ $rect = $cons[0]->{rect};
 is($rect->{x}, 0, "con is on the left edge");
 is($rect->{y}, 0, "con is on the upper edge");
 
+exit_gracefully($pid);
+
 ##########################################################################
 # Given a floating container and the cursor is in the left right lower
 # edge of the output, when moving the container to the mouse, then the 
 # container is moved but adjusted to stay in-bounds.
 ##########################################################################
+
+$config = <<EOT;
+font pango:monospace 8
+EOT
+$pid = launch_with_config($config);
 
 $ws = fresh_workspace;
 open_floating_window;
@@ -83,6 +102,8 @@ $rect = $cons[0]->{rect};
 
 is($rect->{x} + $rect->{width}, $root_rect->width, "con is on the right edge");
 is($rect->{y} + $rect->{height}, $root_rect->height, "con is on the lower edge");
+
+exit_gracefully($pid);
 
 ##########################################################################
 
