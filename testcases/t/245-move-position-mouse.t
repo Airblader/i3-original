@@ -106,5 +106,33 @@ is($rect->{y} + $rect->{height}, $root_rect->height, "con is on the lower edge")
 exit_gracefully($pid);
 
 ##########################################################################
+# Given a floating container and the cursor being close to the corner of
+# an output, when the container is moved to the mouse, then the container
+# is moved but adjusted to the output boundaries.
+# This test verifies that boundaries of individual outputs are respected
+# and not just boundaries of the entire X root screen.
+##########################################################################
+
+$config = <<EOT;
+font pango:monospace 8
+fake-outputs 500x500+0+0,500x500+500+0,500x500+0+500,500x500+500+500
+EOT
+$pid = launch_with_config($config);
+
+$ws = fresh_workspace;
+open_floating_window;
+warp_pointer(495, 495);
+
+cmd 'move position mouse';
+
+@cons = @{get_ws($ws)->{floating_nodes}};
+$rect = $cons[0]->{rect};
+
+is($rect->{x} + $rect->{width}, 500, "con is on the right edge");
+is($rect->{y} + $rect->{height}, 500, "con is on the lower edge");
+
+exit_gracefully($pid);
+
+##########################################################################
 
 done_testing;
