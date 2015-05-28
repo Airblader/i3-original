@@ -1217,6 +1217,12 @@ static bool handle_strut_partial_change(void *data, xcb_connection_t *conn, uint
     } else if (con->window->reserved.top == 0 && con->window->reserved.bottom > 0) {
         DLOG("Bottom dock client\n");
         con->window->dock = W_DOCK_BOTTOM;
+    } else if (con->window->reserved.left > 0 && con->window->reserved.right == 0) {
+        DLOG("Left dock client\n");
+        con->window->dock = W_DOCK_LEFT;
+    } else if (con->window->reserved.left == 0 && con->window->reserved.right > 0) {
+        DLOG("Right dock client\n");
+        con->window->dock = W_DOCK_RIGHT;
     } else {
         DLOG("Ignoring invalid reserved edges (_NET_WM_STRUT_PARTIAL), using position as fallback:\n");
         if (con->geometry.y < (search_at->rect.height / 2)) {
@@ -1228,6 +1234,8 @@ static bool handle_strut_partial_change(void *data, xcb_connection_t *conn, uint
                  con->geometry.y, (search_at->rect.height / 2));
             con->window->dock = W_DOCK_BOTTOM;
         }
+
+        // TODO #1129: Handle other cases?
     }
 
     /* find the dockarea */

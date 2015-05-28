@@ -222,6 +222,12 @@ void manage_window(xcb_window_t window, xcb_get_window_attributes_cookie_t cooki
         } else if (cwindow->reserved.top == 0 && cwindow->reserved.bottom > 0) {
             DLOG("Bottom dock client\n");
             cwindow->dock = W_DOCK_BOTTOM;
+        } else if (cwindow->reserved.left > 0 && cwindow->reserved.right == 0) {
+            DLOG("Left dock client\n");
+            cwindow->dock = W_DOCK_LEFT;
+        } else if (cwindow->reserved.left == 0 && cwindow->reserved.right > 0) {
+            DLOG("Right dock client\n");
+            cwindow->dock = W_DOCK_RIGHT;
         } else {
             DLOG("Ignoring invalid reserved edges (_NET_WM_STRUT_PARTIAL), using position as fallback:\n");
             if (geom->y < (int16_t)(search_at->rect.height / 2)) {
@@ -233,6 +239,8 @@ void manage_window(xcb_window_t window, xcb_get_window_attributes_cookie_t cooki
                      geom->y, (search_at->rect.height / 2));
                 cwindow->dock = W_DOCK_BOTTOM;
             }
+
+            // TODO #1129 Handle other cases?
         }
     }
 
