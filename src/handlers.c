@@ -553,13 +553,35 @@ static bool handle_windowname_change(void *data, xcb_connection_t *conn, uint8_t
         return false;
 
     char *old_name = (con->window->name != NULL ? sstrdup(i3string_as_utf8(con->window->name)) : NULL);
-
     window_update_name(con->window, prop, false);
+
+    Con *placeholder = con_for_window(croot, con->window, NULL);
+    if (placeholder != NULL) {
+        DLOG("found placeholder container %p after changing window name for %p\n", placeholder, con);
+        if (placeholder->window == NULL || !restore_kill_placeholder(placeholder->window->id))
+            ELOG("placeholder container has no placeholder window, aborting.\n");
+        else {
+            DLOG("moving window to the placeholder container.\n");
+
+            x_move_win(con, placeholder);
+            x_reparent_child(placeholder, con);
+            placeholder->window = con->window;
+            placeholder->mapped = con->mapped;
+
+            con->window = NULL;
+            tree_close(con, DONT_KILL_WINDOW, false, false);
+            // TODO deco_rect etc. :(
+            // TODO remove swallow criteria?
+//            tree_render();
+
+//            con = placeholder;
+        }
+    }
 
     x_push_changes(croot);
 
-    if (window_name_changed(con->window, old_name))
-        ipc_send_window_event("title", con);
+//    if (window_name_changed(con->window, old_name))
+//        ipc_send_window_event("title", con);
 
     FREE(old_name);
 
