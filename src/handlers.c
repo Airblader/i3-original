@@ -676,7 +676,8 @@ static void handle_client_message(xcb_client_message_event_t *event) {
     if (event->type == A__NET_WM_STATE) {
         if (event->format != 32 ||
             (event->data.data32[1] != A__NET_WM_STATE_FULLSCREEN &&
-             event->data.data32[1] != A__NET_WM_STATE_DEMANDS_ATTENTION)) {
+             event->data.data32[1] != A__NET_WM_STATE_DEMANDS_ATTENTION &&
+             event->data.data32[1] != A__NET_WM_STATE_STICKY)) {
             DLOG("Unknown atom in clientmessage of type %d\n", event->data.data32[1]);
             return;
         }
@@ -706,6 +707,13 @@ static void handle_client_message(xcb_client_message_event_t *event) {
                 con_set_urgency(con, false);
             else if (event->data.data32[0] == _NET_WM_STATE_TOGGLE)
                 con_set_urgency(con, !con->urgent);
+        } else if (event->data.data32[1] == A__NET_WM_STATE_STICKY) {
+            if (event->data.data32[0] == _NET_WM_STATE_ADD)
+                con->sticky = true;
+            else if (event->data.data32[0] == _NET_WM_STATE_REMOVE)
+                con->sticky = false;
+            else if (event->data.data32[0] == _NET_WM_STATE_TOGGLE)
+                con->sticky = !con->sticky;
         }
 
         tree_render();
