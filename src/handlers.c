@@ -714,6 +714,8 @@ static void handle_client_message(xcb_client_message_event_t *event) {
                 con->sticky = false;
             else if (event->data.data32[0] == _NET_WM_STATE_TOGGLE)
                 con->sticky = !con->sticky;
+
+            output_push_sticky_windows();
         }
 
         tree_render();
