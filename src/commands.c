@@ -501,7 +501,11 @@ void cmd_move_con_to_workspace_back_and_forth(I3_CMD) {
  *
  */
 void cmd_move_con_to_workspace_name(I3_CMD, char *name) {
-    if (strncasecmp(name, "__", strlen("__")) == 0) {
+    Con *ws = NULL;
+    if (strcmp(name, "__focused__") == 0) {
+        LOG("should move window to currently focused workspace\n");
+        ws = con_get_workspace(focused);
+    } else if (strncasecmp(name, "__", strlen("__")) == 0) {
         LOG("You cannot move containers to i3-internal workspaces (\"%s\").\n", name);
         ysuccess(false);
         return;
@@ -522,9 +526,10 @@ void cmd_move_con_to_workspace_name(I3_CMD, char *name) {
         return;
     }
 
-    LOG("should move window to workspace %s\n", name);
-    /* get the workspace */
-    Con *ws = workspace_get(name, NULL);
+    if (ws == NULL) {
+        LOG("should move window to workspace %s\n", name);
+        ws = workspace_get(name, NULL);
+    }
 
     ws = maybe_auto_back_and_forth_workspace(ws);
 
@@ -1253,14 +1258,20 @@ void cmd_floating(I3_CMD, char *floating_mode) {
  *
  */
 void cmd_move_workspace_to_output(I3_CMD, char *name) {
-    DLOG("should move workspace to output %s\n", name);
+    char *target = name;
+    if (strcmp(name, "__focused__") == 0) {
+        Con *output_con = con_get_output(focused);
+        target = get_output_by_name(output_con->name)->name;
+    }
+
+    DLOG("should move workspace to output %s\n", target);
 
     HANDLE_EMPTY_MATCH;
 
     owindow *current;
     TAILQ_FOREACH(current, &owindows, owindows) {
         Con *ws = con_get_workspace(current->con);
-        bool success = workspace_move_to_output(ws, name);
+        bool success = workspace_move_to_output(ws, target);
         if (!success) {
             ELOG("Failed to move workspace to output.\n");
             ysuccess(false);
