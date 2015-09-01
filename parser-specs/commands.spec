@@ -40,6 +40,8 @@ state INITIAL:
   'title_format' -> TITLE_FORMAT
   'mode' -> MODE
   'bar' -> BAR
+  colorclass = 'client.focused_inactive', 'client.focused', 'client.unfocused', 'client.urgent', 'client.placeholder'
+      -> COLOR_BORDER
 
 state CRITERIA:
   ctype = 'class'       -> CRITERION
@@ -400,3 +402,20 @@ state BAR_W_ID:
       ->
   end
       -> call cmd_bar($bar_type, $bar_value, $bar_id)
+
+# <colorclass> <border> <background> <text> <indicator>
+state COLOR_BORDER:
+  border = word
+      -> COLOR_BACKGROUND
+
+state COLOR_BACKGROUND:
+  background = word
+      -> COLOR_TEXT
+
+state COLOR_TEXT:
+  text = word
+      -> COLOR_INDICATOR
+
+state COLOR_INDICATOR:
+  indicator = word
+      -> call cmd_color($colorclass, $border, $background, $text, $indicator)

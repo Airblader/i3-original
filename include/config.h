@@ -45,18 +45,6 @@ struct context {
 };
 
 /**
- * Part of the struct Config. It makes sense to group colors for background,
- * border and text as every element in i3 has them (window decorations, bar).
- *
- */
-struct Colortriple {
-    uint32_t border;
-    uint32_t background;
-    uint32_t text;
-    uint32_t indicator;
-};
-
-/**
  * Holds a user-assigned variable for parsing the configuration file. The key
  * is replaced by value in every following line of the file.
  *
@@ -204,14 +192,8 @@ struct Config {
     int32_t floating_minimum_height;
 
     /* Color codes are stored here */
-    struct config_client {
-        uint32_t background;
-        struct Colortriple focused;
-        struct Colortriple focused_inactive;
-        struct Colortriple unfocused;
-        struct Colortriple urgent;
-        struct Colortriple placeholder;
-    } client;
+    client_colors client;
+
     struct config_bar {
         struct Colortriple focused;
         struct Colortriple unfocused;

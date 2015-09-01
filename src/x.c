@@ -340,14 +340,15 @@ void x_draw_decoration(Con *con) {
     struct deco_render_params *p = scalloc(1, sizeof(struct deco_render_params));
 
     /* find out which colors to use */
+    // TODO suuuuper ugly
     if (con->urgent)
-        p->color = &config.client.urgent;
+        p->color = con->colors.urgent.border != 0 ? &(con->colors.urgent) : &config.client.urgent;
     else if (con == focused || con_inside_focused(con))
-        p->color = &config.client.focused;
+        p->color = con->colors.focused.border != 0 ? &(con->colors.focused) : &config.client.focused;
     else if (con == TAILQ_FIRST(&(parent->focus_head)))
-        p->color = &config.client.focused_inactive;
+        p->color = con->colors.focused_inactive.border != 0 ? &(con->colors.focused_inactive) : &config.client.focused_inactive;
     else
-        p->color = &config.client.unfocused;
+        p->color = con->colors.unfocused.border != 0 ? &(con->colors.unfocused) : &config.client.unfocused;
 
     p->border_style = con_border_style(con);
 
@@ -356,6 +357,7 @@ void x_draw_decoration(Con *con) {
     p->con_rect = (struct width_height){r->width, r->height};
     p->con_window_rect = (struct width_height){w->width, w->height};
     p->con_deco_rect = con->deco_rect;
+    // TODO needs to be taken care of as well, too lazy right now
     p->background = config.client.background;
     p->con_is_leaf = con_is_leaf(con);
     p->parent_layout = con->parent->layout;

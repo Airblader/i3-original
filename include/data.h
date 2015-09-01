@@ -46,6 +46,8 @@ typedef struct Con Con;
 typedef struct Match Match;
 typedef struct Assignment Assignment;
 typedef struct Window i3Window;
+typedef struct Colortriple Colortriple;
+typedef struct client_colors client_colors;
 
 /******************************************************************************
  * Helper types
@@ -178,6 +180,27 @@ struct deco_render_params {
     uint32_t background;
     layout_t parent_layout;
     bool con_is_leaf;
+};
+
+/**
+ * It makes sense to group colors for background, border and text as every
+ * element in i3 has them (window decorations, bar).
+ *
+ */
+struct Colortriple {
+    uint32_t border;
+    uint32_t background;
+    uint32_t text;
+    uint32_t indicator;
+};
+
+struct client_colors {
+    uint32_t background;
+    struct Colortriple focused;
+    struct Colortriple focused_inactive;
+    struct Colortriple unfocused;
+    struct Colortriple urgent;
+    struct Colortriple placeholder;
 };
 
 /**
@@ -657,4 +680,6 @@ struct Con {
 
     /* Depth of the container window */
     uint16_t depth;
+
+    client_colors colors;
 };

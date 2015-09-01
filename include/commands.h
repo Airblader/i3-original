@@ -294,6 +294,12 @@ void cmd_rename_workspace(I3_CMD, char *old_name, char *new_name);
  */
 void cmd_bar(I3_CMD, char *bar_type, char *bar_value, char *bar_id);
 
+/**
+ * Implementation of '<colorclass> <border> <background> <text> <indicator>
+ *
+ */
+void cmd_color(I3_CMD, char *colorclass, char *border, char *background, char *text, char *indicator);
+
 /*
  * Implementation of 'shmlog <size>|toggle|on|off'
  *

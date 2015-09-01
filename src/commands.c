@@ -2137,6 +2137,43 @@ void cmd_bar(I3_CMD, char *bar_type, char *bar_value, char *bar_id) {
 }
 
 /*
+ * Implementation of '<colorclass> <border> <background> <text> <indicator>'
+ *
+ */
+void cmd_color(I3_CMD, char *colorclass, char *border, char *background, char *text, char *indicator) {
+    // TODO Really support all these attributes? :/
+    // TODO If yes, should they be somehow optional, i.e., if user only wants to override border color?
+    // TODO dump in IPC and read during restart?
+
+    HANDLE_EMPTY_MATCH;
+
+    owindow *current;
+    TAILQ_FOREACH(current, &owindows, owindows) {
+        DLOG("applying colorclass %s %s %s %s %s to con = %p.\n", colorclass, border, background, text, indicator, current->con);
+
+#define APPLY_COLORS(classname)                                                     \
+    do {                                                                            \
+        if (strcmp(colorclass, "client." #classname) == 0) {                        \
+            current->con->colors.classname.border = get_colorpixel(border);         \
+            current->con->colors.classname.background = get_colorpixel(background); \
+            current->con->colors.classname.text = get_colorpixel(text);             \
+            current->con->colors.classname.indicator = get_colorpixel(indicator);   \
+        }                                                                           \
+    } while (0)
+
+        APPLY_COLORS(focused_inactive);
+        APPLY_COLORS(focused);
+        APPLY_COLORS(unfocused);
+        APPLY_COLORS(urgent);
+        APPLY_COLORS(placeholder);
+#undef APPLY_COLORS
+    }
+
+    cmd_output->needs_tree_render = true;
+    ysuccess(true);
+}
+
+/*
  * Implementation of 'shmlog <size>|toggle|on|off'
  *
  */
