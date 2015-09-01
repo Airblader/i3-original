@@ -33,6 +33,7 @@
 
 #include "common.h"
 #include "libi3.h"
+#include "i3_cairo.h"
 
 /* We save the atoms in an easy to access array, indexed by an enum */
 enum {
@@ -173,12 +174,14 @@ static void draw_separator(uint32_t x, struct status_block *block) {
     uint32_t center_x = x - sep_offset;
     if (config.separator_symbol == NULL) {
         /* Draw a classic one pixel, vertical separator. */
-        uint32_t mask = XCB_GC_FOREGROUND | XCB_GC_BACKGROUND | XCB_GC_LINE_WIDTH;
-        uint32_t values[] = {colors.sep_fg, colors.bar_bg, logical_px(1)};
-        xcb_change_gc(xcb_connection, statusline_ctx, mask, values);
-        xcb_poly_line(xcb_connection, XCB_COORD_MODE_ORIGIN, statusline_pm, statusline_ctx, 2,
-                      (xcb_point_t[]){{center_x, logical_px(sep_voff_px)},
-                                      {center_x, bar_height - logical_px(sep_voff_px)}});
+        //uint32_t mask = XCB_GC_FOREGROUND | XCB_GC_BACKGROUND | XCB_GC_LINE_WIDTH;
+        //uint32_t values[] = {colors.sep_fg, colors.bar_bg, logical_px(1)};
+        //xcb_change_gc(xcb_connection, statusline_ctx, mask, values);
+        //xcb_poly_line(xcb_connection, XCB_COORD_MODE_ORIGIN, statusline_pm, statusline_ctx, 2,
+        //              (xcb_point_t[]){{center_x, logical_px(sep_voff_px)},
+        //                              {center_x, bar_height - logical_px(sep_voff_px)}});
+        i3_cairo_poly_line(conn, statusline_pm, 2, (xcb_point_t[]){{center_x, logical_px(sep_voff_px)},
+                {center_x, bar_height - logical_px(sep_voff_px)}}, (i3_cairo_line_opts){0,0,logical_px(1)});
     } else {
         /* Draw a custom separator. */
         uint32_t separator_x = MAX(x - block->sep_block_width, center_x - separator_symbol_width / 2);
