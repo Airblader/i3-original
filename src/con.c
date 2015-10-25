@@ -574,6 +574,9 @@ void con_mark(Con *con, const char *mark, mark_mode_t mode) {
     TAILQ_INSERT_TAIL(&(con->marks_head), new, marks);
 
     con->mark_changed = true;
+
+    if (con->window != NULL)
+        run_assignments(con->window);
 }
 
 /*

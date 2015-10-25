@@ -459,5 +459,27 @@ is_deeply($nodes[0]->{nodes}[0]->{marks}, [ 'triggered' ], "mark set for workspa
 exit_gracefully($pid);
 
 ##############################################################
+# 13: check that the criterion 'con_mark' works
+##############################################################
+
+$config = <<"EOT";
+# i3 config file (v4)
+font -misc-fixed-medium-r-normal--13-120-75-75-C-70-iso10646-1
+for_window [con_mark="findme"] floating enable, mark triggered
+EOT
+
+$pid = launch_with_config($config);
+
+$tmp = fresh_workspace;
+$window = open_window;
+cmd 'mark findme';
+
+@nodes = @{get_ws($tmp)->{floating_nodes}};
+cmp_ok(@nodes, '==', 1, 'one floating container on this workspace');
+is_deeply($nodes[0]->{nodes}[0]->{marks}, [ 'triggered' ], "mark set for con_mark criterion");
+
+exit_gracefully($pid);
+
+##############################################################
 
 done_testing;
