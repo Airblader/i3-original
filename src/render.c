@@ -59,8 +59,13 @@ void render_con(Con *con, bool render_fullscreen) {
          * needs to be smaller */
         Rect *inset = &(con->window_rect);
         *inset = (Rect){0, 0, con->rect.width, con->rect.height};
-        if (!render_fullscreen)
+        if (!render_fullscreen) {
             *inset = rect_add(*inset, con_border_style_rect(con));
+
+            // TODO XXX does this belong into con_border_style_rect?
+            inset->y += con->deco_rect.height;
+            inset->height -= con->deco_rect.height;
+        }
 
         /* Obey x11 border */
         inset->width -= (2 * con->border_width);
@@ -186,25 +191,33 @@ free_params:
 
 static int *precalculate_sizes(Con *con, render_params *p) {
     int *sizes = smalloc(p->children * sizeof(int));
-    if ((con->layout == L_SPLITH || con->layout == L_SPLITV) && p->children > 0) {
-        assert(!TAILQ_EMPTY(&con->nodes_head));
+    if ((con->layout != L_SPLITH && con->layout != L_SPLITV) || p->children == 0)
+        return sizes;
 
-        Con *child;
-        int i = 0, assigned = 0;
-        int total = con_orientation(con) == HORIZ ? p->rect.width : p->rect.height;
-        TAILQ_FOREACH(child, &(con->nodes_head), nodes) {
-            double percentage = child->percent > 0.0 ? child->percent : 1.0 / p->children;
-            assigned += sizes[i++] = percentage * total;
-        }
-        assert(assigned == total ||
-               (assigned > total && assigned - total <= p->children * 2) ||
-               (assigned < total && total - assigned <= p->children * 2));
-        int signal = assigned < total ? 1 : -1;
-        while (assigned != total) {
-            for (i = 0; i < p->children && assigned != total; ++i) {
-                sizes[i] += signal;
-                assigned += signal;
-            }
+    assert(!TAILQ_EMPTY(&con->nodes_head));
+
+    Con *child;
+    int i = 0, assigned = 0;
+    int total = con_orientation(con) == HORIZ ? p->rect.width : p->rect.height;
+
+    /* Distribute the available space between the children, either respecting
+     * their percentage or giving them an equal share. */
+    TAILQ_FOREACH(child, &(con->nodes_head), nodes) {
+        double percentage = child->percent > 0.0 ? child->percent : 1.0 / p->children;
+        assigned += sizes[i++] = percentage * total;
+    }
+
+    /* Make sure our math was reasonably accurate. */
+    assert(assigned == total ||
+            (assigned > total && assigned - total <= p->children * 2) ||
+            (assigned < total && total - assigned <= p->children * 2));
+
+    /* Now we perfect the distribution by adding individual pixels until everything fits. */
+    int signal = assigned < total ? 1 : -1;
+    while (assigned != total) {
+        for (i = 0; i < p->children && assigned != total; ++i) {
+            sizes[i] += signal;
+            assigned += signal;
         }
     }
 
@@ -381,35 +394,28 @@ static void render_output(Con *con) {
 static void render_con_split(Con *con, Con *child, render_params *p, int i) {
     assert(con->layout == L_SPLITH || con->layout == L_SPLITV);
 
+    child->rect.x = p->x;
+    child->rect.y = p->y;
     if (con->layout == L_SPLITH) {
-        child->rect.x = p->x;
-        child->rect.y = p->y;
         child->rect.width = p->sizes[i];
         child->rect.height = p->rect.height;
+
         p->x += child->rect.width;
     } else {
-        child->rect.x = p->x;
-        child->rect.y = p->y;
         child->rect.width = p->rect.width;
         child->rect.height = p->sizes[i];
+
         p->y += child->rect.height;
     }
 
-    /* first we have the decoration, if this is a leaf node */
     if (con_is_leaf(child)) {
+        child->deco_rect.x = 0;
+        child->deco_rect.y = 0;
+
         if (child->border_style == BS_NORMAL) {
-            /* TODO: make a function for relative coords? */
-            child->deco_rect.x = child->rect.x - con->rect.x;
-            child->deco_rect.y = child->rect.y - con->rect.y;
-
-            child->rect.y += p->deco_height;
-            child->rect.height -= p->deco_height;
-
             child->deco_rect.width = child->rect.width;
             child->deco_rect.height = p->deco_height;
         } else {
-            child->deco_rect.x = 0;
-            child->deco_rect.y = 0;
             child->deco_rect.width = 0;
             child->deco_rect.height = 0;
         }

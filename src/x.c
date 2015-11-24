@@ -300,8 +300,6 @@ void x_window_kill(xcb_window_t window, kill_window_t kill_window) {
 }
 
 static void x_draw_decoration_border(Con *con, struct deco_render_params *p) {
-    assert(con->parent != NULL);
-
     Rect *dr = &(con->deco_rect);
     adjacent_t borders_to_hide = con_adjacent_borders(con) & config.hide_edge_borders;
     int deco_diff_l = borders_to_hide & ADJ_LEFT_SCREEN_EDGE ? 0 : con->current_border_width;
@@ -312,34 +310,32 @@ static void x_draw_decoration_border(Con *con, struct deco_render_params *p) {
         deco_diff_r = 0;
     }
 
-    draw_util_rectangle(conn, &(con->parent->frame_buffer), p->color->border,
+    draw_util_rectangle(conn, &(con->frame_buffer), p->color->border,
                         dr->x, dr->y, dr->width, 1);
 
-    draw_util_rectangle(conn, &(con->parent->frame_buffer), p->color->border,
+    draw_util_rectangle(conn, &(con->frame_buffer), p->color->border,
                         dr->x + deco_diff_l, dr->y + dr->height - 1, dr->width - (deco_diff_l + deco_diff_r), 1);
 }
 
 static void x_draw_decoration_after_title(Con *con, struct deco_render_params *p) {
-    assert(con->parent != NULL);
-
     Rect *dr = &(con->deco_rect);
     Rect br = con_border_style_rect(con);
 
     /* Redraw the right border to cut off any text that went past it.
      * This is necessary when the text was drawn using XCB since cutting text off
      * automatically does not work there. For pango rendering, this isn't necessary. */
-    draw_util_rectangle(conn, &(con->parent->frame_buffer), p->color->background,
+    draw_util_rectangle(conn, &(con->frame_buffer), p->color->background,
                         dr->x + dr->width + br.width, dr->y, -br.width, dr->height);
 
     /* Draw a 1px separator line before and after every tab, so that tabs can
      * be easily distinguished. */
-    if (con->parent->layout == L_TABBED) {
+    if (con->layout == L_TABBED) {
         /* Left side */
-        draw_util_rectangle(conn, &(con->parent->frame_buffer), p->color->border,
+        draw_util_rectangle(conn, &(con->frame_buffer), p->color->border,
                             dr->x, dr->y, 1, dr->height);
 
         /* Right side */
-        draw_util_rectangle(conn, &(con->parent->frame_buffer), p->color->border,
+        draw_util_rectangle(conn, &(con->frame_buffer), p->color->border,
                             dr->x + dr->width - 1, dr->y, 1, dr->height);
     }
 
@@ -348,7 +344,7 @@ static void x_draw_decoration_after_title(Con *con, struct deco_render_params *p
 }
 
 /*
- * Draws the decoration of the given container onto its parent.
+ * Draws the decoration of the given container.
  *
  */
 void x_draw_decoration(Con *con) {
@@ -407,7 +403,6 @@ void x_draw_decoration(Con *con) {
 
     if (con->deco_render_params != NULL &&
         (con->window == NULL || !con->window->name_x_changed) &&
-        !parent->pixmap_recreated &&
         !con->pixmap_recreated &&
         !con->mark_changed &&
         memcmp(p, con->deco_render_params, sizeof(struct deco_render_params)) == 0) {
@@ -426,7 +421,6 @@ void x_draw_decoration(Con *con) {
     if (con->window != NULL && con->window->name_x_changed)
         con->window->name_x_changed = false;
 
-    parent->pixmap_recreated = false;
     con->pixmap_recreated = false;
     con->mark_changed = false;
 
@@ -503,21 +497,8 @@ void x_draw_decoration(Con *con) {
     if (p->border_style != BS_NORMAL)
         goto copy_pixmaps;
 
-    /* If the parent hasn't been set up yet, skip the decoration rendering
-     * for now. */
-    if (parent->frame_buffer.id == XCB_NONE)
-        goto copy_pixmaps;
-
-    /* For the first child, we clear the parent pixmap to ensure there's no
-     * garbage left on there. This is important to avoid tearing when using
-     * transparency. */
-    if (con == TAILQ_FIRST(&(con->parent->nodes_head))) {
-        draw_util_clear_surface(conn, &(con->parent->frame_buffer), COLOR_TRANSPARENT);
-        FREE(con->parent->deco_render_params);
-    }
-
     /* 4: paint the bar */
-    draw_util_rectangle(conn, &(parent->frame_buffer), p->color->background,
+    draw_util_rectangle(conn, &(con->frame_buffer), p->color->background,
                         con->deco_rect.x, con->deco_rect.y, con->deco_rect.width, con->deco_rect.height);
 
     /* 5: draw two unconnected horizontal lines in border color */
@@ -537,7 +518,7 @@ void x_draw_decoration(Con *con) {
         free(tree);
 
         i3String *title = i3string_from_utf8(_title);
-        draw_util_text(title, &(parent->frame_buffer),
+        draw_util_text(title, &(con->frame_buffer),
                        p->color->text, p->color->background,
                        con->deco_rect.x + 2, con->deco_rect.y + text_offset_y,
                        con->deco_rect.width - 2);
@@ -588,7 +569,7 @@ void x_draw_decoration(Con *con) {
             i3String *mark = i3string_from_utf8(formatted_mark);
             mark_width = predict_text_width(mark);
 
-            draw_util_text(mark, &(parent->frame_buffer),
+            draw_util_text(mark, &(con->frame_buffer),
                            p->color->text, p->color->background,
                            con->deco_rect.x + con->deco_rect.width - mark_width - logical_px(2),
                            con->deco_rect.y + text_offset_y, mark_width);
@@ -600,7 +581,7 @@ void x_draw_decoration(Con *con) {
     }
 
     i3String *title = win->title_format == NULL ? win->name : window_parse_title_format(win);
-    draw_util_text(title, &(parent->frame_buffer),
+    draw_util_text(title, &(con->frame_buffer),
                    p->color->text, p->color->background,
                    con->deco_rect.x + logical_px(2) + indent_px, con->deco_rect.y + text_offset_y,
                    con->deco_rect.width - logical_px(2) - indent_px - mark_width - logical_px(2));
@@ -732,12 +713,10 @@ void x_push_node(Con *con) {
              con, con->window->id, con->ignore_unmap);
     }
 
-    /* The pixmap of a borderless leaf container will not be used except
-     * for the titlebar in a stack or tabs (issue #1013). */
-    bool is_pixmap_needed = (con->border_style != BS_NONE ||
-                             !con_is_leaf(con) ||
-                             con->parent->layout == L_STACKED ||
-                             con->parent->layout == L_TABBED);
+    /* We need a pixmap if the container has some kind of border or is in a
+     * tabbed/stacked layout. */
+    bool is_pixmap_needed = con->border_style != BS_NONE ||
+                            con->parent->layout == L_STACKED || con->parent->layout == L_TABBED;
 
     /* The root con and output cons will never require a pixmap. In particular for the
      * __i3 output, this will likely not work anyway because it might be ridiculously

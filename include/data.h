@@ -571,14 +571,13 @@ struct Con {
 
     struct Con *parent;
 
-    /* The position and size for this con. These coordinates are absolute. Note
-     * that the rect of a container does not include the decoration. */
+    /* The position and size for this con. These coordinates are absolute. */
     struct Rect rect;
     /* The position and size of the actual client window. These coordinates are
      * relative to the container's rect. */
     struct Rect window_rect;
     /* The position and size of the container's decoration. These coordinates
-     * are relative to the container's parent's rect. */
+     * are relative to the container's rect. */
     struct Rect deco_rect;
     /** the geometry this window requested when getting mapped */
     struct Rect geometry;
