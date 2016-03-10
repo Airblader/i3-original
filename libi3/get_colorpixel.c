@@ -33,17 +33,27 @@ colorpixels;
  *
  */
 uint32_t get_colorpixel(const char *hex) {
-    char strgroups[3][3] = {
+    char alpha[2];
+    if (strlen(hex) == strlen("#rrggbbaa")) {
+        alpha[0] = hex[7];
+        alpha[1] = hex[8];
+    } else {
+        alpha[0] = alpha[1] = 'F';
+    }
+
+    char strgroups[4][3] = {
         {hex[1], hex[2], '\0'},
         {hex[3], hex[4], '\0'},
-        {hex[5], hex[6], '\0'}};
+        {hex[5], hex[6], '\0'},
+        {alpha[0], alpha[1], '\0'}};
     uint8_t r = strtol(strgroups[0], NULL, 16);
     uint8_t g = strtol(strgroups[1], NULL, 16);
     uint8_t b = strtol(strgroups[2], NULL, 16);
+    uint8_t a = strtol(strgroups[3], NULL, 16);
 
     /* Shortcut: if our screen is true color, no need to do a roundtrip to X11 */
     if (root_screen == NULL || root_screen->root_depth == 24 || root_screen->root_depth == 32) {
-        return (0xFF << 24) | (r << 16 | g << 8 | b);
+        return (a << 24) | (r << 16 | g << 8 | b);
     }
 
     /* Lookup this colorpixel in the cache */
@@ -61,11 +71,10 @@ uint32_t get_colorpixel(const char *hex) {
     xcb_alloc_color_reply_t *reply;
 
     reply = xcb_alloc_color_reply(conn, xcb_alloc_color(conn, root_screen->default_colormap,
-                                                        r16, g16, b16),
-                                  NULL);
+                                                        r16, g16, b16), NULL);
 
-    if (!reply) {
-        LOG("Could not allocate color\n");
+    if (reply == NULL) {
+        LOG("Could not allocate color '%s'.\n", hex);
         exit(1);
     }
 
