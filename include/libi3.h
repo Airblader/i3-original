@@ -403,7 +403,7 @@ typedef struct color_t {
     uint32_t colorpixel;
 } color_t;
 
-#define COLOR_TRANSPARENT ((color_t){.red = 0.0, .green = 0.0, .blue = 0.0, .colorpixel = 0})
+#define COLOR_TRANSPARENT ((color_t){.red = 0.0, .green = 0.0, .blue = 0.0, .alpha = 0.0, .colorpixel = 0})
 
 /**
  * Defines the colors to be used for the forthcoming draw_text calls.
