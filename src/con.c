@@ -199,6 +199,12 @@ void con_focus(Con *con) {
     assert(con != NULL);
     DLOG("con_focus = %p\n", con);
 
+    if (con->type == CT_ROOT || con->type == CT_OUTPUT ||
+        con->type == CT_DOCKAREA || con->type == CT_CON) {
+        ELOG("This con is of type %d, not focusing it.\n", con->type);
+        return;
+    }
+
     /* 1: set focused-pointer to the new con */
     /* 2: exchange the position of the container in focus stack of the parent all the way up */
     TAILQ_REMOVE(&(con->parent->focus_head), con, focused);
@@ -374,6 +380,12 @@ Con *con_get_workspace(Con *con) {
     Con *result = con;
     while (result != NULL && result->type != CT_WORKSPACE)
         result = result->parent;
+
+    if (result == NULL) {
+        ELOG("Could not determine workspace for container %p (type %d).\n",
+             con, con->type);
+    }
+
     return result;
 }
 
